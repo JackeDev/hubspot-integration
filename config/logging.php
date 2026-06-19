@@ -123,6 +123,13 @@ return [
             'handler' => NullHandler::class,
         ],
 
+        'hubspot' => [
+            'driver' => 'daily',
+            'path'   => storage_path('logs/hubspot.log'),
+            'level'  => 'debug',
+            'days'   => 14,
+        ],
+
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
