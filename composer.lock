@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "53b5d56b3b7e3cbac1713e68c8850f6c",
+    "content-hash": "79fe62d50891c7982beb8623d5dcd689",
     "packages": [
         {
             "name": "brick/math",
@@ -5810,6 +5810,58 @@
             "time": "2026-03-30T13:44:50+00:00"
         },
         {
+            "name": "tambourine/hubspot-client",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/JackeDev/hubspot-client.git",
+                "reference": "75fb4cb5411e77cf6511eaf8374866eba83e4fd5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/JackeDev/hubspot-client/zipball/75fb4cb5411e77cf6511eaf8374866eba83e4fd5",
+                "reference": "75fb4cb5411e77cf6511eaf8374866eba83e4fd5",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/http": "^12.0",
+                "illuminate/support": "^12.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "laravel/framework": "^12.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Tambourine\\HubspotClient\\HubspotServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Tambourine\\HubspotClient\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jackeline Hernandez",
+                    "email": "jhernandez.maurera.dev@gmail.com"
+                }
+            ],
+            "description": "Reusable HubSpot API Client",
+            "support": {
+                "source": "https://github.com/JackeDev/hubspot-client/tree/main",
+                "issues": "https://github.com/JackeDev/hubspot-client/issues"
+            },
+            "time": "2026-06-19T19:48:30+00:00"
+        },
+        {
             "name": "tijsverkoyen/css-to-inline-styles",
             "version": "v2.4.0",
             "source": {
@@ -8401,7 +8453,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "tambourine/hubspot-client": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
