@@ -12,14 +12,14 @@
         }
     ],
     "paths": {
-        "/contact": {
+        "/contacts": {
             "post": {
                 "tags": [
                     "Contacts"
                 ],
                 "summary": "Create a new contact",
-                "description": "Creates a contact locally and syncs it with HubSpot. The operation is atomic: if the HubSpot sync fails the database record is rolled back.",
-                "operationId": "73386d2311b75932d459cf702d403119",
+                "description": "Creates a contact in the local database and syncs it with HubSpot within a single transaction. If the HubSpot sync fails, the database record is rolled back and no contact is persisted.",
+                "operationId": "24f7d39ea3f69b1f561ea368af46f5d3",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -32,7 +32,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Contact created and synced with HubSpot",
+                        "description": "Contact created and synced with HubSpot successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -42,7 +42,7 @@
                         }
                     },
                     "422": {
-                        "description": "Validation error",
+                        "description": "Request validation failed (missing or invalid fields)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -51,18 +51,8 @@
                             }
                         }
                     },
-                    "401": {
-                        "description": "HubSpot authentication failed",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                }
-                            }
-                        }
-                    },
-                    "429": {
-                        "description": "HubSpot rate limit exceeded",
+                    "503": {
+                        "description": "HubSpot service error — covers authentication failure, rate limit exceeded, invalid properties, connection failure, and request timeout",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -72,31 +62,11 @@
                         }
                     },
                     "500": {
-                        "description": "HubSpot API error or internal server error",
+                        "description": "Unexpected internal server error",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                }
-                            }
-                        }
-                    },
-                    "503": {
-                        "description": "HubSpot connection failed",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                }
-                            }
-                        }
-                    },
-                    "504": {
-                        "description": "HubSpot request timed out",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/UnexpectedErrorResponse"
                                 }
                             }
                         }
@@ -195,11 +165,11 @@
                 "properties": {
                     "message": {
                         "type": "string",
-                        "example": "HubSpot authentication failed"
+                        "example": "Hubspot Service Error"
                     },
                     "code": {
                         "type": "integer",
-                        "example": 401
+                        "example": 503
                     }
                 },
                 "type": "object"
@@ -217,6 +187,19 @@
                                 "The first_name field is required."
                             ]
                         }
+                    }
+                },
+                "type": "object"
+            },
+            "UnexpectedErrorResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Unexpected Error"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "example": 500
                     }
                 },
                 "type": "object"

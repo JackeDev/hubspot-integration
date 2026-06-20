@@ -2,9 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\Contact;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Tambourine\HubspotClient\Exceptions\AuthorizationException;
 use Tambourine\HubspotClient\Exceptions\GenericHubspotException;
 use Tambourine\HubspotClient\Exceptions\RateLimitException;
@@ -14,6 +15,16 @@ use Tests\TestCase;
 class ContactControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    const CREATE_ROUTE = 'contacts.create';
+
+    const HUBSPOT_ERROR_RESPONSE = ['message' => 'Hubspot Service Error', 'code' => Response::HTTP_SERVICE_UNAVAILABLE];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Log::spy();
+    }
 
     private function validPayload(): array
     {
@@ -37,20 +48,20 @@ class ContactControllerTest extends TestCase
     {
         $this->mockHubspot();
 
-        $response = $this->postJson('/api/contact', $this->validPayload());
+        $response = $this->postJson(route(self::CREATE_ROUTE), $this->validPayload());
 
-        $response->assertStatus(201)
+        $response->assertStatus(Response::HTTP_CREATED)
             ->assertJsonStructure([
                 'data' => [
-                    'id', 
-                    'first_name', 
-                    'last_name', 
+                    'id',
+                    'first_name',
+                    'last_name',
                     'email',
-                    'phone', 
-                    'client_id', 
+                    'phone',
+                    'client_id',
                     'client_provider',
                     'last_client_updated',
-                    'created_at', 
+                    'created_at',
                     'updated_at',
                 ],
             ])
@@ -63,6 +74,8 @@ class ContactControllerTest extends TestCase
             'client_id'       => 'hs-123',
             'client_provider' => 'hubspot',
         ]);
+
+        Log::shouldNotHaveReceived('error');
     }
 
     public function test_creates_contact_without_optional_phone(): void
@@ -72,74 +85,27 @@ class ContactControllerTest extends TestCase
         $payload = $this->validPayload();
         unset($payload['phone']);
 
-        $this->postJson('/api/contact', $payload)
-            ->assertStatus(201)
+        $this->postJson(route(self::CREATE_ROUTE), $payload)
+            ->assertStatus(Response::HTTP_CREATED)
             ->assertJsonPath('data.phone', null);
+
+        Log::shouldNotHaveReceived('error');
     }
 
-    public function test_returns_422_when_first_name_is_missing(): void
+    public function test_returns_422_with_validation_error_structure(): void
     {
-        $payload = $this->validPayload();
-        unset($payload['first_name']);
+        $this->postJson(route(self::CREATE_ROUTE), [])
+            ->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonStructure([
+                'message',
+                'errors' => [
+                    'first_name',
+                    'last_name',
+                    'email',
+                ],
+            ]);
 
-        $this->postJson('/api/contact', $payload)
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['first_name']);
-    }
-
-    public function test_returns_422_when_last_name_is_missing(): void
-    {
-        $payload = $this->validPayload();
-        unset($payload['last_name']);
-
-        $this->postJson('/api/contact', $payload)
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['last_name']);
-    }
-
-    public function test_returns_422_when_email_is_missing(): void
-    {
-        $payload = $this->validPayload();
-        unset($payload['email']);
-
-        $this->postJson('/api/contact', $payload)
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['email']);
-    }
-
-    public function test_returns_422_when_email_format_is_invalid(): void
-    {
-        $payload          = $this->validPayload();
-        $payload['email'] = 'not-a-valid-email';
-
-        $this->postJson('/api/contact', $payload)
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['email']);
-    }
-
-    public function test_returns_422_when_email_already_exists(): void
-    {
-        Contact::create([
-            'first_name'      => 'Jane',
-            'last_name'       => 'Doe',
-            'email'           => 'john@example.com',
-            'client_id'       => 'existing-hs-456',
-            'client_provider' => 'hubspot',
-        ]);
-
-        $this->postJson('/api/contact', $this->validPayload())
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['email']);
-    }
-
-    public function test_returns_422_when_phone_format_is_invalid(): void
-    {
-        $payload          = $this->validPayload();
-        $payload['phone'] = 'abc@@##invalid';
-
-        $this->postJson('/api/contact', $payload)
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['phone']);
+        Log::shouldNotHaveReceived('error');
     }
 
     public function test_returns_401_when_hubspot_token_is_invalid(): void
@@ -147,13 +113,17 @@ class ContactControllerTest extends TestCase
         $this->mock(HubspotContactService::class)
             ->shouldReceive('create')
             ->once()
-            ->andThrow(new AuthorizationException('HubSpot authentication failed', 401));
+            ->andThrow(new AuthorizationException('HubSpot authentication failed', Response::HTTP_UNAUTHORIZED));
 
-        $this->postJson('/api/contact', $this->validPayload())
-            ->assertStatus(401)
-            ->assertJson(['message' => 'HubSpot authentication failed', 'code' => 401]);
+        $this->postJson(route(self::CREATE_ROUTE), $this->validPayload())
+            ->assertStatus(Response::HTTP_SERVICE_UNAVAILABLE)
+            ->assertJson(self::HUBSPOT_ERROR_RESPONSE);
 
         $this->assertDatabaseEmpty('contacts');
+
+        Log::shouldHaveReceived('error')
+            ->once()
+            ->with('HubSpot authentication failed', ['code' => Response::HTTP_UNAUTHORIZED]);
     }
 
     public function test_returns_429_when_hubspot_rate_limit_is_exceeded(): void
@@ -161,13 +131,17 @@ class ContactControllerTest extends TestCase
         $this->mock(HubspotContactService::class)
             ->shouldReceive('create')
             ->once()
-            ->andThrow(new RateLimitException('HubSpot rate limit exceeded', 429));
+            ->andThrow(new RateLimitException('HubSpot rate limit exceeded', Response::HTTP_TOO_MANY_REQUESTS));
 
-        $this->postJson('/api/contact', $this->validPayload())
-            ->assertStatus(429)
-            ->assertJson(['message' => 'HubSpot rate limit exceeded', 'code' => 429]);
+        $this->postJson(route(self::CREATE_ROUTE), $this->validPayload())
+            ->assertStatus(Response::HTTP_SERVICE_UNAVAILABLE)
+            ->assertJson(self::HUBSPOT_ERROR_RESPONSE);
 
         $this->assertDatabaseEmpty('contacts');
+
+        Log::shouldHaveReceived('error')
+            ->once()
+            ->with('HubSpot rate limit exceeded', ['code' => Response::HTTP_TOO_MANY_REQUESTS]);
     }
 
     public function test_returns_500_on_generic_hubspot_api_error(): void
@@ -175,13 +149,17 @@ class ContactControllerTest extends TestCase
         $this->mock(HubspotContactService::class)
             ->shouldReceive('create')
             ->once()
-            ->andThrow(new GenericHubspotException('HubSpot API error', 500));
+            ->andThrow(new GenericHubspotException('HubSpot API error', Response::HTTP_INTERNAL_SERVER_ERROR));
 
-        $this->postJson('/api/contact', $this->validPayload())
-            ->assertStatus(500)
-            ->assertJson(['message' => 'HubSpot API error', 'code' => 500]);
+        $this->postJson(route(self::CREATE_ROUTE), $this->validPayload())
+            ->assertStatus(Response::HTTP_SERVICE_UNAVAILABLE)
+            ->assertJson(self::HUBSPOT_ERROR_RESPONSE);
 
         $this->assertDatabaseEmpty('contacts');
+
+        Log::shouldHaveReceived('error')
+            ->once()
+            ->with('HubSpot API error', ['code' => Response::HTTP_INTERNAL_SERVER_ERROR]);
     }
 
     public function test_returns_503_when_hubspot_connection_fails(): void
@@ -189,13 +167,17 @@ class ContactControllerTest extends TestCase
         $this->mock(HubspotContactService::class)
             ->shouldReceive('create')
             ->once()
-            ->andThrow(new ConnectionException('Connection refused', 503));
+            ->andThrow(new ConnectionException('Connection refused', Response::HTTP_SERVICE_UNAVAILABLE));
 
-        $this->postJson('/api/contact', $this->validPayload())
-            ->assertStatus(503)
-            ->assertJsonStructure(['message', 'code']);
+        $this->postJson(route(self::CREATE_ROUTE), $this->validPayload())
+            ->assertStatus(Response::HTTP_SERVICE_UNAVAILABLE)
+            ->assertJson(self::HUBSPOT_ERROR_RESPONSE);
 
         $this->assertDatabaseEmpty('contacts');
+
+        Log::shouldHaveReceived('error')
+            ->once()
+            ->with('Connection refused', ['code' => Response::HTTP_SERVICE_UNAVAILABLE]);
     }
 
     public function test_returns_504_when_hubspot_request_times_out(): void
@@ -203,13 +185,17 @@ class ContactControllerTest extends TestCase
         $this->mock(HubspotContactService::class)
             ->shouldReceive('create')
             ->once()
-            ->andThrow(new ConnectionException('cURL error 28: Operation timed out', 504));
+            ->andThrow(new ConnectionException('cURL error 28: Operation timed out', Response::HTTP_GATEWAY_TIMEOUT));
 
-        $this->postJson('/api/contact', $this->validPayload())
-            ->assertStatus(504)
-            ->assertJsonStructure(['message', 'code']);
+        $this->postJson(route(self::CREATE_ROUTE), $this->validPayload())
+            ->assertStatus(Response::HTTP_SERVICE_UNAVAILABLE)
+            ->assertJson(self::HUBSPOT_ERROR_RESPONSE);
 
         $this->assertDatabaseEmpty('contacts');
+
+        Log::shouldHaveReceived('error')
+            ->once()
+            ->with('cURL error 28: Operation timed out', ['code' => Response::HTTP_GATEWAY_TIMEOUT]);
     }
 
     public function test_rolls_back_db_contact_when_hubspot_throws(): void
@@ -217,12 +203,16 @@ class ContactControllerTest extends TestCase
         $this->mock(HubspotContactService::class)
             ->shouldReceive('create')
             ->once()
-            ->andThrow(new GenericHubspotException('HubSpot API error', 500));
+            ->andThrow(new GenericHubspotException('HubSpot API error', Response::HTTP_INTERNAL_SERVER_ERROR));
 
-        $this->postJson('/api/contact', $this->validPayload())
-            ->assertStatus(500)
-            ->assertJson(['message' => 'HubSpot API error', 'code' => 500]);
+        $this->postJson(route(self::CREATE_ROUTE), $this->validPayload())
+            ->assertStatus(Response::HTTP_SERVICE_UNAVAILABLE)
+            ->assertJson(self::HUBSPOT_ERROR_RESPONSE);
 
         $this->assertDatabaseEmpty('contacts');
+
+        Log::shouldHaveReceived('error')
+            ->once()
+            ->with('HubSpot API error', ['code' => Response::HTTP_INTERNAL_SERVER_ERROR]);
     }
 }

@@ -7,8 +7,8 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'ErrorResponse',
     properties: [
-        new OA\Property(property: 'message', type: 'string', example: 'HubSpot authentication failed'),
-        new OA\Property(property: 'code',    type: 'integer', example: 401),
+        new OA\Property(property: 'message', type: 'string', example: 'Hubspot Service Error'),
+        new OA\Property(property: 'code',    type: 'integer', example: 503),
     ]
 )]
 class ErrorResponseSchema {}
@@ -25,3 +25,12 @@ class ErrorResponseSchema {}
     ]
 )]
 class ValidationErrorResponseSchema {}
+
+#[OA\Schema(
+    schema: 'UnexpectedErrorResponse',
+    properties: [
+        new OA\Property(property: 'message', type: 'string', example: 'Unexpected Error'),
+        new OA\Property(property: 'code',    type: 'integer', example: 500),
+    ]
+)]
+class UnexpectedErrorResponseSchema {}

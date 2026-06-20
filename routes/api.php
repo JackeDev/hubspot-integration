@@ -1,13 +1,8 @@
 <?php
 
 use App\Http\Controllers\ContactController;
-use App\Http\Controllers\TestController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\DealController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
-Route::get("/test", [TestController::class, "test"]);
-Route::post("/contact", [ContactController::class, "store"]);
+Route::post("/contacts", [ContactController::class, "store"])->name('contacts.create');
+Route::post("/deals", [DealController::class, "store"])->name('deals.create');

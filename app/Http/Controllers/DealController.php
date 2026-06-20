@@ -2,64 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Deal;
-use Illuminate\Http\Request;
+use App\Http\Requests\CreateDealRequest;
+use App\Http\Resources\DealResource;
+use App\Services\DealService;
+use App\Traits\ErrorResponses;
+use Exception;
 
 class DealController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
+    use ErrorResponses;
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function __construct(protected DealService $dealService) {}
+    
+    public function store(CreateDealRequest $request)
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Deal $deal)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Deal $deal)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Deal $deal)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Deal $deal)
-    {
-        //
+        try {
+            $deal = $this->dealService->createDeal($request->all());
+            $deal->refresh();
+            return (new DealResource($deal))->response()->setStatusCode(201);
+        } catch (Exception $exception) {
+            $this->error($exception->getMessage(), $exception->getCode());
+        }
     }
 }

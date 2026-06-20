@@ -7,9 +7,9 @@ use OpenApi\Attributes as OA;
 class ContactEndpoints
 {
     #[OA\Post(
-        path: '/contact',
+        path: '/contacts',
         summary: 'Create a new contact',
-        description: 'Creates a contact locally and syncs it with HubSpot. The operation is atomic: if the HubSpot sync fails the database record is rolled back.',
+        description: 'Creates a contact in the local database and syncs it with HubSpot within a single transaction. If the HubSpot sync fails, the database record is rolled back and no contact is persisted.',
         tags: ['Contacts'],
         requestBody: new OA\RequestBody(
             required: true,
@@ -18,38 +18,23 @@ class ContactEndpoints
         responses: [
             new OA\Response(
                 response: 201,
-                description: 'Contact created and synced with HubSpot',
+                description: 'Contact created and synced with HubSpot successfully',
                 content: new OA\JsonContent(ref: '#/components/schemas/ContactResource')
             ),
             new OA\Response(
                 response: 422,
-                description: 'Validation error',
+                description: 'Request validation failed (missing or invalid fields)',
                 content: new OA\JsonContent(ref: '#/components/schemas/ValidationErrorResponse')
             ),
             new OA\Response(
-                response: 401,
-                description: 'HubSpot authentication failed',
-                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
-            ),
-            new OA\Response(
-                response: 429,
-                description: 'HubSpot rate limit exceeded',
+                response: 503,
+                description: 'HubSpot service error — covers authentication failure, rate limit exceeded, invalid properties, connection failure, and request timeout',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
             ),
             new OA\Response(
                 response: 500,
-                description: 'HubSpot API error or internal server error',
-                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
-            ),
-            new OA\Response(
-                response: 503,
-                description: 'HubSpot connection failed',
-                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
-            ),
-            new OA\Response(
-                response: 504,
-                description: 'HubSpot request timed out',
-                content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')
+                description: 'Unexpected internal server error',
+                content: new OA\JsonContent(ref: '#/components/schemas/UnexpectedErrorResponse')
             ),
         ]
     )]
