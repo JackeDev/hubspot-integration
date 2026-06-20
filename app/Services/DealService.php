@@ -3,9 +3,10 @@
 namespace App\Services;
 
 use App\Models\Deal;
-use Illuminate\Support\Facades\DB;
 use App\Repositories\DealRepository;
 use Tambourine\HubspotClient\Services\HubspotDealService;
+use Tambourine\HubspotClient\Exceptions\GenericHubspotException;
+use Illuminate\Http\Response;
 
 class DealService
 {
@@ -14,17 +15,27 @@ class DealService
         protected HubspotDealService $hubspotDealService
     ) {}
 
+    public function getDealById(int $id): Deal
+    {
+        return $this->dealRepository->getById($id);
+    }
+
     public function createDeal(array $data): Deal
     {
-        return DB::transaction(function () use ($data) {
-            $deal = $this->dealRepository->create($data);
+        $hubspotResult = $this->hubspotDealService->create($data);
 
-            $hubspotResult = $this->hubspotDealService->create($data);
-
-            return $this->dealRepository->update($deal, [
+        if ($hubspotResult->status() === Response::HTTP_CREATED){
+            $data = [
+                ...$data,
                 'client_id'       => $hubspotResult['id'],
                 'client_provider' => 'hubspot',
-            ]);
-        });
+            ];
+
+            $deal = $this->dealRepository->create($data);
+
+            return $deal;
+        }
+        
+        throw new GenericHubspotException(code: $hubspotResult->status(), response: $hubspotResult->json());
     }
 }

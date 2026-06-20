@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\CreateDealRequest;
-use App\Http\Resources\DealResource;
-use App\Services\DealService;
+use App\Http\Requests\CreateAsociationRequest;
+use App\Services\AssociationService;
 use App\Traits\HandleExceptions;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
@@ -13,25 +12,29 @@ use Illuminate\Http\Response;
 use Tambourine\HubspotClient\Exceptions\GenericHubspotException;
 use Tambourine\HubspotClient\Exceptions\RateLimitException;
 use Tambourine\HubspotClient\Exceptions\ValidationException;
+use App\Http\Resources\AssociationResource;
+use Tambourine\HubspotClient\Exceptions\ResourceNotFoundException;
 
-class DealController extends Controller
+class AssociationController extends Controller
 {
     use HandleExceptions;
 
-    public function __construct(protected DealService $dealService) {}
+    public function __construct(protected AssociationService $associationService) {}
     
-    public function store(CreateDealRequest $request)
+    public function store(CreateAsociationRequest $request)
     {
         try {
-            $deal = $this->dealService->createDeal($request->all());
-            $deal->refresh();
-            return new DealResource($deal);
-        } catch (
+            $association = $this->associationService->createAssociation($request->validated());
+            $association->refresh();
+            return new AssociationResource($association);
+        } 
+        catch (
             AuthorizationException | 
             RateLimitException | 
             ValidationException | 
             GenericHubspotException |
-            ConnectionException $exception
+            ConnectionException |
+            ResourceNotFoundException $exception
         )  
         {
             return $this->handleErrorResponse($exception, "Hubspot Service Error", Response::HTTP_SERVICE_UNAVAILABLE);    

@@ -37,12 +37,19 @@ class DealControllerTest extends TestCase
         ];
     }
 
-    private function mockHubspot(array $returns = ['id' => 'hs-deal-123']): void
+    private function hubspotResponse(int $status, array $body = []): \Illuminate\Http\Client\Response
+    {
+        return new \Illuminate\Http\Client\Response(
+            new \GuzzleHttp\Psr7\Response($status, ['Content-Type' => 'application/json'], json_encode($body))
+        );
+    }
+
+    private function mockHubspot(string $id = 'hs-deal-123'): void
     {
         $this->mock(HubspotDealService::class)
             ->shouldReceive('create')
             ->once()
-            ->andReturn($returns);
+            ->andReturn($this->hubspotResponse(Response::HTTP_CREATED, ['id' => $id]));
     }
 
     public function test_creates_deal_successfully(): void
@@ -183,7 +190,7 @@ class DealControllerTest extends TestCase
             ->with('cURL error 28: Operation timed out', ['code' => Response::HTTP_GATEWAY_TIMEOUT]);
     }
 
-    public function test_rolls_back_db_deal_when_hubspot_throws(): void
+    public function test_does_not_save_deal_in_db_when_hubspot_fails(): void
     {
         $this->mock(HubspotDealService::class)
             ->shouldReceive('create')

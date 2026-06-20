@@ -12,6 +12,68 @@
         }
     ],
     "paths": {
+        "/associations": {
+            "post": {
+                "tags": [
+                    "Associations"
+                ],
+                "summary": "Associate a contact with a deal",
+                "description": "Links an existing local contact to an existing local deal by creating the association in HubSpot and persisting it locally. Both the contact and deal must already exist in HubSpot (i.e. have a client_id). If either is not found in HubSpot, the operation is rejected.",
+                "operationId": "85e870f0ea89a12e117d7df8707e4e81",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateAssociationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Association created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssociationResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed — contact_id or deal_id are missing, non-numeric, or do not exist in the local database",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssociationValidationErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "HubSpot service error — covers contact/deal not found in HubSpot, authentication failure, rate limit exceeded, connection failure, and request timeout",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnexpectedErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/contacts": {
             "post": {
                 "tags": [
@@ -139,6 +201,39 @@
     },
     "components": {
         "schemas": {
+            "AssociationResource": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/Association"
+                    }
+                },
+                "type": "object"
+            },
+            "Association": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "contact_id": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "deal_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "ContactResource": {
                 "properties": {
                     "data": {
@@ -191,6 +286,25 @@
                     "updated_at": {
                         "type": "string",
                         "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "CreateAssociationRequest": {
+                "required": [
+                    "contact_id",
+                    "deal_id"
+                ],
+                "properties": {
+                    "contact_id": {
+                        "description": "ID of an existing local contact",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "deal_id": {
+                        "description": "ID of an existing local deal",
+                        "type": "integer",
+                        "example": 3
                     }
                 },
                 "type": "object"
@@ -369,6 +483,26 @@
                     }
                 },
                 "type": "object"
+            },
+            "AssociationValidationErrorResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "The contact id field is required."
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": {
+                            "contact_id": [
+                                "The selected contact id is invalid."
+                            ],
+                            "deal_id": [
+                                "The selected deal id is invalid."
+                            ]
+                        }
+                    }
+                },
+                "type": "object"
             }
         }
     },
@@ -380,6 +514,10 @@
         {
             "name": "Deals",
             "description": "Deal management endpoints"
+        },
+        {
+            "name": "Associations",
+            "description": "Contact–Deal association endpoints"
         }
     ]
 }

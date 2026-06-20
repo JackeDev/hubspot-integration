@@ -4,7 +4,8 @@ namespace App\Services;
 
 use App\Models\Contact;
 use App\Repositories\ContactRepository;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Response;
+use Tambourine\HubspotClient\Exceptions\GenericHubspotException;
 use Tambourine\HubspotClient\Services\HubspotContactService;
 
 class ContactService
@@ -14,17 +15,27 @@ class ContactService
         protected HubspotContactService $hubspotContactService
     ) {}
 
+    public function getContactById(int $id): Contact
+    {
+        return $this->contactRepository->getById($id);
+    }
+
     public function createContact(array $data): Contact
     {
-        return DB::transaction(function () use ($data) {
-            $contact = $this->contactRepository->create($data);
+        $hubspotResult = $this->hubspotContactService->create($data);
 
-            $hubspotResult = $this->hubspotContactService->create($data);
-
-            return $this->contactRepository->update($contact, [
+        if ($hubspotResult->status() === Response::HTTP_CREATED){
+            $data = [
+                ...$data,
                 'client_id'       => $hubspotResult['id'],
                 'client_provider' => 'hubspot',
-            ]);
-        });
+            ];
+
+            $contact = $this->contactRepository->create($data);
+
+            return $contact;
+        }
+        
+        throw new GenericHubspotException(code: $hubspotResult->status(), response: $hubspotResult->json());
     }
 }

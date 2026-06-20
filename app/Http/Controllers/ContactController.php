@@ -25,7 +25,7 @@ class ContactController extends Controller
         try {
             $contact = $this->contactService->createContact($request->validated());
             $contact->refresh();
-            return (new ContactResource($contact))->response()->setStatusCode(Response::HTTP_CREATED);
+            return new ContactResource($contact);
         } 
         catch (
             AuthorizationException | 

@@ -47,3 +47,19 @@ class UnexpectedErrorResponseSchema {}
     ]
 )]
 class DealValidationErrorResponseSchema {}
+
+#[OA\Schema(
+    schema: 'AssociationValidationErrorResponse',
+    properties: [
+        new OA\Property(property: 'message', type: 'string', example: 'The contact id field is required.'),
+        new OA\Property(
+            property: 'errors',
+            type: 'object',
+            example: [
+                'contact_id' => ['The selected contact id is invalid.'],
+                'deal_id'    => ['The selected deal id is invalid.'],
+            ],
+        ),
+    ]
+)]
+class AssociationValidationErrorResponseSchema {}
