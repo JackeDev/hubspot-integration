@@ -11,4 +11,5 @@ use OpenApi\Attributes as OA;
 )]
 #[OA\Server(url: '/api', description: 'API Server')]
 #[OA\Tag(name: 'Contacts', description: 'Contact management endpoints')]
+#[OA\Tag(name: 'Deals', description: 'Deal management endpoints')]
 class ApiInfo {}

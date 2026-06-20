@@ -73,6 +73,68 @@
                     }
                 }
             }
+        },
+        "/deals": {
+            "post": {
+                "tags": [
+                    "Deals"
+                ],
+                "summary": "Create a new deal",
+                "description": "Creates a deal in the local database and syncs it with HubSpot within a single transaction. If the HubSpot sync fails, the database record is rolled back and no deal is persisted.",
+                "operationId": "937ee6c11f2995c92f12009d9f3c24b8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateDealRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Deal created and synced with HubSpot successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DealResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Request validation failed (missing or invalid fields)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DealValidationErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "HubSpot service error — covers authentication failure, rate limit exceeded, invalid properties, connection failure, and request timeout",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnexpectedErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -161,6 +223,90 @@
                 },
                 "type": "object"
             },
+            "CreateDealRequest": {
+                "required": [
+                    "name",
+                    "amount",
+                    "pipeline",
+                    "stage"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Summer Vacation"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 5000,
+                        "minimum": 1
+                    },
+                    "pipeline": {
+                        "type": "string",
+                        "example": "default"
+                    },
+                    "stage": {
+                        "type": "string",
+                        "example": "appointmentscheduled"
+                    }
+                },
+                "type": "object"
+            },
+            "DealResource": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/Deal"
+                    }
+                },
+                "type": "object"
+            },
+            "Deal": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Summer Vacation"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 5000
+                    },
+                    "pipeline": {
+                        "type": "string",
+                        "example": "default"
+                    },
+                    "stage": {
+                        "type": "string",
+                        "example": "appointmentscheduled"
+                    },
+                    "client_id": {
+                        "type": "string",
+                        "example": "hs-deal-123"
+                    },
+                    "client_provider": {
+                        "type": "string",
+                        "example": "hubspot"
+                    },
+                    "last_client_updated": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "ErrorResponse": {
                 "properties": {
                     "message": {
@@ -203,6 +349,26 @@
                     }
                 },
                 "type": "object"
+            },
+            "DealValidationErrorResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "The name field is required."
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": {
+                            "name": [
+                                "The name field is required."
+                            ],
+                            "amount": [
+                                "The amount field is required."
+                            ]
+                        }
+                    }
+                },
+                "type": "object"
             }
         }
     },
@@ -210,6 +376,10 @@
         {
             "name": "Contacts",
             "description": "Contact management endpoints"
+        },
+        {
+            "name": "Deals",
+            "description": "Deal management endpoints"
         }
     ]
 }

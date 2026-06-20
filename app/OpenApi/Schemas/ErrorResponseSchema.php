@@ -34,3 +34,16 @@ class ValidationErrorResponseSchema {}
     ]
 )]
 class UnexpectedErrorResponseSchema {}
+
+#[OA\Schema(
+    schema: 'DealValidationErrorResponse',
+    properties: [
+        new OA\Property(property: 'message', type: 'string', example: 'The name field is required.'),
+        new OA\Property(
+            property: 'errors',
+            type: 'object',
+            example: ['name' => ['The name field is required.'], 'amount' => ['The amount field is required.']],
+        ),
+    ]
+)]
+class DealValidationErrorResponseSchema {}

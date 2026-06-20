@@ -7,22 +7,28 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::table('contacts', function (Blueprint $table) {
+        Schema::table('deals', function (Blueprint $table) {
             $table->string('client_id')->nullable()->change();
             $table->string('client_provider')->nullable()->change();
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        DB::table('contacts')
+        DB::table('deals')
             ->whereNull('client_id')
             ->orWhereNull('client_provider')
             ->delete();
 
-        Schema::table('contacts', function (Blueprint $table) {
+        Schema::table('deals', function (Blueprint $table) {
             $table->string('client_id')->nullable(false)->change();
             $table->string('client_provider')->nullable(false)->change();
         });
