@@ -5815,12 +5815,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/JackeDev/hubspot-client.git",
-                "reference": "75fb4cb5411e77cf6511eaf8374866eba83e4fd5"
+                "reference": "c2d6398aa80d5824aab548ec467c129b0c5035fb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/JackeDev/hubspot-client/zipball/75fb4cb5411e77cf6511eaf8374866eba83e4fd5",
-                "reference": "75fb4cb5411e77cf6511eaf8374866eba83e4fd5",
+                "url": "https://api.github.com/repos/JackeDev/hubspot-client/zipball/c2d6398aa80d5824aab548ec467c129b0c5035fb",
+                "reference": "c2d6398aa80d5824aab548ec467c129b0c5035fb",
                 "shasum": ""
             },
             "require": {
@@ -5859,7 +5859,7 @@
                 "source": "https://github.com/JackeDev/hubspot-client/tree/main",
                 "issues": "https://github.com/JackeDev/hubspot-client/issues"
             },
-            "time": "2026-06-19T19:48:30+00:00"
+            "time": "2026-06-20T01:19:54+00:00"
         },
         {
             "name": "tijsverkoyen/css-to-inline-styles",
