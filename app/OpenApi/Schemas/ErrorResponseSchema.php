@@ -63,3 +63,19 @@ class DealValidationErrorResponseSchema {}
     ]
 )]
 class AssociationValidationErrorResponseSchema {}
+
+#[OA\Schema(
+    schema: 'WebhookContactUpdateValidationErrorResponse',
+    properties: [
+        new OA\Property(property: 'message', type: 'string', example: 'The email field is required when phone is not present.'),
+        new OA\Property(
+            property: 'errors',
+            type: 'object',
+            example: [
+                'email' => ['The email field is required when phone is not present.'],
+                'phone' => ['The phone field is required when email is not present.'],
+            ],
+        ),
+    ]
+)]
+class WebhookContactUpdateValidationErrorResponseSchema {}

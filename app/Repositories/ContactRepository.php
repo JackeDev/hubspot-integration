@@ -11,6 +11,11 @@ class ContactRepository
         return Contact::find($id);
     }
 
+    public function getFirstByProperty(string $property_name, mixed $value): Contact
+    {
+        return Contact::query()->where($property_name, $value)->first();
+    }
+
     public function create(array $data): Contact
     {
         return Contact::create($data);

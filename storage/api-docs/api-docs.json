@@ -197,6 +197,58 @@
                     }
                 }
             }
+        },
+        "/webhooks/contact-updated": {
+            "post": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Receive a HubSpot contact-updated event",
+                "description": "Processes an incoming HubSpot webhook event for a contact update.\n\n**Idempotency:** Each `event_id` is accepted only once. Replaying the same event returns 422.\n\n**Field requirements:** At least one of `email` or `phone` must be provided. Both can be sent together.\n\nOn success, the matching contact (looked up by `contact_id` = HubSpot `client_id`) is updated with the provided fields and `last_client_updated` is set to the current timestamp. The processed event is recorded and the updated contact is returned.",
+                "operationId": "a36e40ca96e258d5a1138df76f2ebad1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WebhookContactUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Event processed successfully — returns the updated contact",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed — missing required fields, duplicate event_id, unknown contact_id, duplicate email, or invalid phone format",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebhookContactUpdateValidationErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnexpectedErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -503,6 +555,58 @@
                     }
                 },
                 "type": "object"
+            },
+            "WebhookContactUpdateValidationErrorResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "The email field is required when phone is not present."
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": {
+                            "email": [
+                                "The email field is required when phone is not present."
+                            ],
+                            "phone": [
+                                "The phone field is required when email is not present."
+                            ]
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "WebhookContactUpdateRequest": {
+                "required": [
+                    "event_id",
+                    "contact_id"
+                ],
+                "properties": {
+                    "event_id": {
+                        "description": "Unique identifier for this webhook event. Used to guarantee idempotency — duplicate event IDs are rejected.",
+                        "type": "string",
+                        "example": "evt-abc123"
+                    },
+                    "contact_id": {
+                        "description": "The HubSpot contact ID (client_id) of the contact to update. Must match an existing contact.",
+                        "type": "string",
+                        "example": "hs-contact-123"
+                    },
+                    "email": {
+                        "description": "New email address. Required if phone is not provided. Must be unique across all contacts.",
+                        "type": "string",
+                        "format": "email",
+                        "example": "updated@example.com",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "description": "New phone number. Required if email is not provided. Must match international phone format.",
+                        "type": "string",
+                        "example": "+1 555 123 4567",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
             }
         }
     },
@@ -518,6 +622,10 @@
         {
             "name": "Associations",
             "description": "Contact–Deal association endpoints"
+        },
+        {
+            "name": "Webhooks",
+            "description": "HubSpot webhook event receivers"
         }
     ]
 }

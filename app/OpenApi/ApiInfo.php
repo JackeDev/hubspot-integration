@@ -13,4 +13,5 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Contacts', description: 'Contact management endpoints')]
 #[OA\Tag(name: 'Deals', description: 'Deal management endpoints')]
 #[OA\Tag(name: 'Associations', description: 'Contact–Deal association endpoints')]
+#[OA\Tag(name: 'Webhooks', description: 'HubSpot webhook event receivers')]
 class ApiInfo {}
