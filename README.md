@@ -342,3 +342,7 @@ database/migrations/        contacts, deals, associations, webhook_contact_event
 routes/api.php              API route definitions
 tests/                      Unit (Requests) + Feature (full HTTP flow)
 ```
+
+## License
+
+MIT © Jackeline Hernandez
