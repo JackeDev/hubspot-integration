@@ -19,6 +19,7 @@ class ContactControllerTest extends TestCase
     {
         parent::setUp();
         Log::spy();
+        Log::shouldReceive('channel')->andReturnSelf();
     }
 
     private function createContact(string $clientId = 'hs-contact-123'): Contact
